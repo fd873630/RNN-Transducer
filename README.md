@@ -15,11 +15,13 @@
 AI hub에서 제공하는 '한국어 음성데이터'를 사용하였습니다. AI Hub 음성 데이터는 다음 링크에서 신청 후 다운로드 하실 수 있습니다.
 
 train data 총 길이 - 약 250시간 (248.9시간) "./label,csv/AI_hub_train_U_800_T_50.csv"
+
 val data 총 길이 - 약 5시간 (5.1시간) "./label,csv/AI_hub_val_U_800_T_50.csv"
 
 AI Hub 한국어 음성 데이터 : http://www.aihub.or.kr/aidata/105 
 
 Q1 : 왜 AI hub데이터에 있는 eval 데이터 셋을 사용하지 않고 train에서 임의로 나눠 사용했는지?
+
 A1 : RNN-T loss는 wav len과 script len에 따라서 시간과 메모리를 잡아 먹습니다. 그러므로 wav len과 script len은 특정 길이로 제한했는데 eval 데이터에서 제한하면 데이터가 부족해 train에서 나눴습니다. (옛날(19년)에는 없었는데 최근에 올라온거라 ...)
 
 ### Custom Data set
@@ -58,6 +60,7 @@ b/ (70%)/(칠 십 퍼센트) 확률이라니
 txt_path.txt 에 Number Final script가 들어가야 합니다.
 
 Q1 : <s> 와 </s> 는 왜 들어간건지? 
+
 A1 : 나중에 two pass를 사용하기 위해서 집어 넣었습니다. RNN-T만 사용하신다면 삭제해도 무방합니다.
 
 
