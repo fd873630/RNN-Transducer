@@ -26,10 +26,7 @@ class BaseDecoder(nn.Module):
         if length is not None:
             sorted_seq_lengths, indices = torch.sort(length, descending=True)
             
-            #이거 인풋은 30인데 왜 out이 29인지 찾기
-            
             embed_inputs = embed_inputs[indices]
-            
             embed_inputs = nn.utils.rnn.pack_padded_sequence(
                 embed_inputs, sorted_seq_lengths, batch_first=True)
         

@@ -192,7 +192,8 @@ def main():
                       bidirectional=config.model.enc.bidirectional)
     
     #Transcription Network
-    dec = BaseDecoder(hidden_size=config.model.dec.hidden_size, 
+    dec = BaseDecoder(embedding_size=config.model.dec.embedding_size,
+                      hidden_size=config.model.dec.hidden_size, 
                       vocab_size=config.model.vocab_size, 
                       output_size=config.model.dec.output_size, 
                       n_layers=config.model.dec.n_layers, 
@@ -200,8 +201,8 @@ def main():
 
     model = Transducer(enc, dec, config.model.joint.input_size, config.model.joint.inner_dim, config.model.vocab_size) 
     
-    model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model_save_second.pth"))
-
+    model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model_save_final_2.pth"))
+    
     model = nn.DataParallel(model).to(device)
 
     if config.optim.type == "AdamW":
@@ -234,7 +235,7 @@ def main():
                                        config.data.train_path,
                                        feature_type=config.audio_data.type, 
                                        normalize=True, 
-                                       spec_augment=False)
+                                       spec_augment=True)
 
 
     train_loader = AudioDataLoader(dataset=train_dataset,
@@ -246,7 +247,8 @@ def main():
     val_dataset = SpectrogramDataset(audio_conf, 
                                      config.data.val_path, 
                                      feature_type=config.audio_data.type,
-                                     normalize=True)
+                                     normalize=True,
+                                     spec_augment=False)
 
     val_loader = AudioDataLoader(dataset=val_dataset,
                                     shuffle=True,

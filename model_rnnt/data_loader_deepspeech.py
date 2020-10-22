@@ -1,6 +1,6 @@
 import math
 import os
-
+import time
 from matplotlib import pyplot as plt
 import pandas as pd
 import librosa.display, librosa
@@ -49,7 +49,7 @@ class AudioParser(object):
         raise NotImplementedError
 
 class SpectrogramParser(AudioParser):
-    def __init__(self, audio_conf, feature_type, normalize=False, spec_augment=False):
+    def __init__(self, audio_conf, feature_type, normalize, spec_augment):
         super(SpectrogramParser, self).__init__()
         self.window_stride = audio_conf['window_stride']
         self.window_size = audio_conf['window_size']
@@ -60,27 +60,28 @@ class SpectrogramParser(AudioParser):
         self.spec_augment = spec_augment
 
     def parse_audio(self, audio_path):
+
+        start_time = time.time()
         y,sr = librosa.load(audio_path, 16000)
-        #resample = librosa.resample(y, sr, self.sample_rate)
-        
+            
         n_fft = int(self.sample_rate * self.window_size)
         win_length = n_fft
         hop_length = int(self.sample_rate * self.window_stride)
-        
+            
         # log_mel spec
         if self.feature_type == "log_mel":
             D = np.abs(librosa.stft(y, n_fft=n_fft, hop_length=hop_length,
-                            win_length=win_length, window=self.window))
-            
+                        win_length=win_length, window=self.window))
+                
             mel_spec = librosa.feature.melspectrogram(S=D, sr=sr, n_mels=80, hop_length=hop_length, win_length=win_length)
             mel_spec = np.log1p(mel_spec)
             spect = torch.FloatTensor(mel_spec)
-        
-        # STFT
+            
+            # STFT
         else:
             D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length,
                             win_length=win_length, window=self.window)
-            
+                
             spect, phase = librosa.magphase(D)
             # S = log(S+1)
             spect = np.log1p(spect)
@@ -91,7 +92,7 @@ class SpectrogramParser(AudioParser):
             std = spect.std()
             spect.add_(-mean)
             spect.div_(std)
-
+        
         if self.spec_augment:
             spect = spec_augment(spect)
 
@@ -106,7 +107,7 @@ class SpectrogramParser(AudioParser):
         raise NotImplementedError
 
 class SpectrogramDataset(Dataset, SpectrogramParser):
-    def __init__(self, audio_conf, manifest_filepath, feature_type, normalize=False, spec_augment=False):
+    def __init__(self, audio_conf, manifest_filepath, feature_type, normalize, spec_augment):
         with open(manifest_filepath) as f:
             ids = f.readlines()
         ids = [x.strip().split(',') for x in ids]
@@ -114,7 +115,7 @@ class SpectrogramDataset(Dataset, SpectrogramParser):
         self.ids = ids
         self.size = len(ids)
                
-        super(SpectrogramDataset, self).__init__(audio_conf, normalize, spec_augment)
+        super(SpectrogramDataset, self).__init__(audio_conf, feature_type, normalize, spec_augment)
 
     def __getitem__(self, index):
         sample = self.ids[index]

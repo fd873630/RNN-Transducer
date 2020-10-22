@@ -4,6 +4,7 @@ import yaml
 import random
 import shutil
 import argparse
+import datetime
 import editdistance
 import scipy.signal
 import numpy as np 
@@ -86,7 +87,6 @@ def train(model, train_loader, optimizer, criterion, device):
     for i, data in enumerate(train_loader):
         
         optimizer.zero_grad()
-
         inputs, targets, inputs_lengths, targets_lengths = data
 
         inputs_lengths = torch.IntTensor(inputs_lengths)
@@ -98,7 +98,6 @@ def train(model, train_loader, optimizer, criterion, device):
         targets_lengths = targets_lengths.to(device)
 
         logits = model(inputs, inputs_lengths, targets, targets_lengths)
-        
         loss = criterion(logits, targets.int(), inputs_lengths.int(), targets_lengths.int())
 
         max_inputs_length = inputs_lengths.max().item()
@@ -109,8 +108,8 @@ def train(model, train_loader, optimizer, criterion, device):
         loss.backward()
         optimizer.step()
 
-        if i % 500 == 0:
-            print('train_batch: {:4d}/{:4d}, train_loss: {:.4f}, train_time: {:.4f}'.format(i, total_batch_num, loss.item(), time.time() - start_time))
+        if i % 1000 == 0:
+            print('{} train_batch: {:4d}/{:4d}, train_loss: {:.4f}, train_time: {:.4f}'.format(datetime.datetime.now(), i, total_batch_num, loss.item(), time.time() - start_time))
             start_time = time.time()
 
     train_loss = total_loss / total_batch_num
@@ -145,22 +144,25 @@ def eval(model, val_loader, criterion, device):
 
 def main():
     
+    yaml_name = "/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile.yaml"
+
     with open("./train.txt", "w") as f:
+        f.write(yaml_name)
+        f.write('\n')
+        f.write('\n')
         f.write("학습 시작")
         f.write('\n')
 
-    configfile = open("/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile.yaml")
+    configfile = open(yaml_name)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
 
     summary = SummaryWriter()
-    summary1 = SummaryWriter()
 
-    windows = {
-    'hamming': scipy.signal.hamming,
-    'hann': scipy.signal.hann,
-    'blackman': scipy.signal.blackman,
-    'bartlett': scipy.signal.bartlett
-    }
+    windows = { 'hamming': scipy.signal.hamming,
+                'hann': scipy.signal.hann,
+                'blackman': scipy.signal.blackman,
+                'bartlett': scipy.signal.bartlett
+                }
 
     SAMPLE_RATE = config.audio_data.sampling_rate
     WINDOW_SIZE = config.audio_data.window_size
@@ -220,12 +222,13 @@ def main():
                                                gamma=config.optim.decay_rate)
 
     criterion = RNNTLoss().to(device)
+
     """
-    acts: Tensor of [batch x seqLength x (labelLength + 1) x outputDim] containing output from network
-    (+1 means first blank label prediction)
-    labels: 2 dimensional Tensor containing all the targets of the batch with zero padded
-    act_lens: Tensor of size (batch) containing size of each output sequence from the network
-    label_lens: Tensor of (batch) containing label length of each example
+        acts: Tensor of [batch x seqLength x (labelLength + 1) x outputDim] containing output from network
+        (+1 means first blank label prediction)
+        labels: 2 dimensional Tensor containing all the targets of the batch with zero padded
+        act_lens: Tensor of size (batch) containing size of each output sequence from the network
+        label_lens: Tensor of (batch) containing label length of each example
     """
 
     #train dataset
@@ -233,46 +236,52 @@ def main():
                                        config.data.train_path,
                                        feature_type=config.audio_data.type, 
                                        normalize=True, 
-                                       spec_augment=False)
-
+                                       spec_augment=True)
 
     train_loader = AudioDataLoader(dataset=train_dataset,
                                     shuffle=True,
                                     num_workers=config.data.num_workers,
                                     batch_size=config.data.batch_size,
                                     drop_last=True)
+    
     #val dataset
     val_dataset = SpectrogramDataset(audio_conf, 
                                      config.data.val_path, 
                                      feature_type=config.audio_data.type,
-                                     normalize=True)
+                                     normalize=True,
+                                     spec_augment=False)
 
     val_loader = AudioDataLoader(dataset=val_dataset,
                                     shuffle=True,
                                     num_workers=config.data.num_workers,
                                     batch_size=config.data.batch_size,
                                     drop_last=True)
-
-    print("학습을 시작합니다.")
+    
+    print("시작합니다.")
     
     pre_val_loss = 100000
     for epoch in range(config.training.begin_epoch, config.training.end_epoch):
         
+    
+        print('{} 학습 시작'.format(datetime.datetime.now()))
         train_time = time.time()
         train_loss = train(model, train_loader, optimizer, criterion, device)
         train_total_time = time.time()-train_time
-        print('Epoch %d (Training) Loss %0.4f time %0.4f' % (epoch+1, train_loss, train_total_time))
-        
+        print(' Epoch %d (Training) Loss %0.4f time %0.4f' % (epoch+1, train_loss, train_total_time))
+        #print('{} Epoch {}, Loss {:.4f}, time: {:.4f}'.format(datetime.datetime.now(), epoch+1, train_loss, train_total_time))
+            
+        print(datetime.datetime.now())
         #summary.add_scalar('Loss', train_loss)
         
+        print("평가 시작")
         eval_time = time.time()
         val_loss = eval(model, val_loader, criterion, device)
         eval_total_time = time.time()-eval_time
         print('Epoch %d (val) Loss %0.4f time %0.4f' % (epoch+1, val_loss, eval_total_time))       
+        print(datetime.datetime.now())
         scheduler.step()
 
         #summary.add_scalar('Loss', val_loss)
-        #summary1.add_scalar('cer', val_cer)
 
         with open("./train.txt", "a") as ff:
             ff.write('Epoch %d (Training) Loss %0.4f time %0.4f' % (epoch+1, train_loss, train_total_time))

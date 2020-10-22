@@ -1,9 +1,9 @@
 data:
-  train_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_train.csv"
-  val_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_val.csv"
+  train_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_train_U_800_T_50.csv"
+  val_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_val_U_800_T_50.csv"
   seed: 123456
   num_workers: 16
-  batch_size: 28
+  batch_size: 32
   
 
 audio_data:
@@ -43,5 +43,5 @@ optim:
   type: "AdamW"
   lr: 0.0001
   weight_decay: 0.01
-  milestones: [6, 20]
+  milestones: [10, 20]
   decay_rate: 0.3333
