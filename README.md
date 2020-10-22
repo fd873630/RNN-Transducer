@@ -8,7 +8,7 @@
 * Cuda compilation tools, release 9.1, V9.1.85
 
 ## Model
-<img width = "200" src = "https://user-images.githubusercontent.com/43025347/96749425-c6f0e480-1405-11eb-9328-06010a44f839.png">
+<img width = "400" src = "https://user-images.githubusercontent.com/43025347/96749425-c6f0e480-1405-11eb-9328-06010a44f839.png">
 
 ## Data set
 ### AI_hub
