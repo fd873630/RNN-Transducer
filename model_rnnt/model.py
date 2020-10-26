@@ -105,50 +105,53 @@ class Transducer(nn.Module):
 
         return results
 
-    #not yet
-    def recognize_old(self, inputs, inputs_length):
-        
+    def beam_search(self, inputs, inputs_length, w): 
+        batch_size = inputs.size(0)
+
         enc_states, _ = self.encoder(inputs, inputs_length)
 
-        batch_size = inputs.size(0)
-      
-        zero = torch.zeros((batch_size, 1)).long()
+        zero_token = torch.LongTensor([[0]])
 
-        if inputs.is_cuda: zero = zero.cuda()
-     
-        def decode(enc_states, lengths):
-            token_list = torch.zeros((batch_size, 1)).long().cuda()
-            dec_state, hidden = self.decoder(zero)
+        if inputs.is_cuda:
+            zero_token = zero_token.cuda()
 
-            pre_list = token_list.squeeze()
+        def decode(enc_state, lengths):
+            token_list = []
 
-            for t in range(enc_states.size(1)):
-                logits = self.joint(enc_states[:,t,:].unsqueeze(1), dec_state)
-                logits = logits.squeeze()
-                out = F.softmax(logits, dim=-1)
-                pred = torch.argmax(out, dim=-1)
+            dec_state, hidden = self.decoder(zero_token)
+
+            for t in range(lengths):
                 
-                index = torch.where(pred == 0)[0].cpu().numpy()
-                
-                pred[index] = pre_list[index] 
-                pred_1 = pred.unsqueeze(1)
+                logits = self.joint(enc_state[t].view(-1), dec_state.view(-1))
+              
+                out = F.softmax(logits, dim=0).detach()
 
-                dec_state, hidden = self.decoder(pred_1, hidden=hidden)
-                token_list = torch.cat((token_list, pred_1), dim=1)
+                values, indices = torch.topk(out, w)
 
-                pre_list = pred
+                for value in values:
+                    pass
+
+
+                pred = torch.argmax(out, dim=0)
+
+                #print(pred)
+                pred = int(pred.item())
+
+                if pred != 0:
+                    token_list.append(pred)
+                    token = torch.LongTensor([[pred]])
+
+                    if enc_state.is_cuda:
+                        token = token.cuda()
+
+                    dec_state, hidden = self.decoder(token, hidden=hidden)
 
             return token_list
 
-        decoded_seq = decode(enc_states, inputs_length)
+        results = []
 
-        all_results = []
+        for i in range(batch_size):
+            decoded_seq = decode(enc_states[i], inputs_length[i])
+            results.append(decoded_seq)
 
-        results = decoded_seq.tolist()
-        
-        for i in range(len(results)):
-            a = results[i]
-            a = list(filter((0).__ne__, a))
-            all_results.append(a)
-
-        return all_results
+        return results    

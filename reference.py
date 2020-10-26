@@ -92,13 +92,6 @@ def reference(model, val_loader, device):
         f.write("reference 시작")
         f.write('\n')
 
-    with open("./bad_reference.txt", "w") as f:
-        f.write('\n')
-        f.write("bad reference 모음")
-        f.write('\n')
-
-
-
     char2index, index2char = load_label('./label,csv/hangul.labels')
 
     with torch.no_grad():
@@ -115,8 +108,10 @@ def reference(model, val_loader, device):
             inputs_lengths = inputs_lengths.to(device)
             targets_lengths = targets_lengths.to(device)
             
+            #preds = model.module.beam_search(inputs, inputs_lengths, w=5)
+
             preds = model.module.recognize(inputs, inputs_lengths)
-                
+
             transcripts = [targets.cpu().numpy()[i][:targets_lengths[i].item()]
                        for i in range(targets.size(0))]
                 
@@ -156,13 +151,6 @@ def reference(model, val_loader, device):
 def main():
     
     yaml_name = "/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile.yaml"
-
-    with open("./train.txt", "w") as f:
-        f.write(yaml_name)
-        f.write('\n')
-        f.write('\n')
-        f.write("학습 시작")
-        f.write('\n')
 
     configfile = open(yaml_name)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
@@ -216,7 +204,7 @@ def main():
 
     #val dataset
     val_dataset = SpectrogramDataset(audio_conf, 
-                                     config.data.val_path, 
+                                     "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_test_all.csv", 
                                      feature_type=config.audio_data.type,
                                      normalize=True,
                                      spec_augment=False)
