@@ -36,12 +36,12 @@ model:
   dropout: 0.3
 
 training:
-  begin_epoch: 0
+  begin_epoch: 8
   end_epoch: 100
 
 optim:
   type: "AdamW"
   lr: 0.0001
   weight_decay: 0.01
-  milestones: [10, 20]
+  milestones: [7, 14]
   decay_rate: 0.3333
