@@ -204,7 +204,7 @@ def main():
     model = Transducer(enc, dec, config.model.joint.input_size, config.model.joint.inner_dim, config.model.vocab_size) 
     
     # 여기 모델 불러오는거
-    model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model2_save_epoch_19.pth"))
+    #model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model2_save_epoch_19.pth"))
     
     model = nn.DataParallel(model).to(device)
 
@@ -265,17 +265,12 @@ def main():
     
     pre_val_loss = 100000
     for epoch in range(config.training.begin_epoch, config.training.end_epoch):
-        
-    
         print('{} 학습 시작'.format(datetime.datetime.now()))
         train_time = time.time()
         train_loss = train(model, train_loader, optimizer, criterion, device)
         train_total_time = time.time()-train_time
-        #print(' Epoch %d (Training) Loss %0.4f time %0.4f' % (epoch+1, train_loss, train_total_time))
         print('{} Epoch {} (Training) Loss {:.4f}, time: {:.4f}'.format(datetime.datetime.now(), epoch+1, train_loss, train_total_time))
 
-        #summary.add_scalar('Loss', train_loss)
-        
         print('{} 평가 시작'.format(datetime.datetime.now()))
         eval_time = time.time()
         val_loss = eval(model, val_loader, criterion, device)
@@ -283,8 +278,6 @@ def main():
         print('{} Epoch {} (val) Loss {:.4f}, time: {:.4f}'.format(datetime.datetime.now(), epoch+1, val_loss, eval_total_time))
         
         scheduler.step()
-
-        #summary.add_scalar('Loss', val_loss)
 
         with open("./train.txt", "a") as ff:
             ff.write('Epoch %d (Training) Loss %0.4f time %0.4f' % (epoch+1, train_loss, train_total_time))
@@ -296,7 +289,6 @@ def main():
         if pre_val_loss > val_loss:
             print("best model을 저장하였습니다.")
             torch.save(model.module.state_dict(), "./model_save/model_save.pth")
-            #torch.save(enc.module.state_dict(), "./model_save/env_save.pth")
             pre_val_loss = val_loss
         
 if __name__ == '__main__':

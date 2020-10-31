@@ -2,17 +2,21 @@
 
 |Description|Feature|Dataset|CER|  
 |-----------|-----|-------|------|  
-|Spec_Augment + RNN-T|log_feature_161|KsponSpeech_eval|24.4|
-|Spec_Augment + RNN-T + Beam search(W = 5)|log_feature_161|KsponSpeech_eval|25.4|
+|Spec_Augment + RNN-T|log_feature_161|KsponSpeech_eval_clean(AI_hub eval 데이터)|24.4|
+|Spec_Augment + RNN-T + Beam search(W = 5)|log_feature_161|KsponSpeech_eval_clean(AI_hub eval 데이터)|25.4|
 |Spec_Augment + RNN-T|log_feature_161|KsponSpeech_val(길이 조절 데이터)|21.2|
 |Spec_Augment + RNN-T + Beam search(W = 5)|log_feature_161|KsponSpeech_val(길이 조절 데이터)|19.4|
 
 ## Intro
-한국어를 위한 RNN-Transducer입니다. 실시간 인식에는 attention기반의 모델보다 RNN-Transducer가 효과적이다고 합니다. 현재 git hub에는 한국어로 test한 결과가 없어 한국어 RNN-Transducer의 성능을 확인하기 위해 작성하였습니다.
+한국어를 위한 RNN-Transducer입니다. 실시간 인식에는 attention기반의 모델보다 RNN-Transducer가 사용된다고 합니다. 현재 git hub에는 한국어로 test한 결과가 없어 한국어 RNN-Transducer를 구현하고 성능을 검증하였습니다.
 
 ## Version
 * torch version = 1.2.0
 * Cuda compilation tools, release 9.1, V9.1.85
+* nn.DataParallel를 통해 multi GPU 학습
+
+## How to install RNN-T Loss
+* https://github.com/HawkAaron/warp-transducer/tree/master/pytorch_binding
 
 ## Data
 ### Dataset information
@@ -150,20 +154,21 @@ DataParallel(
 * NVIDIA TITAN Xp * 4
 
 ## Q & A
-Q1 : 왜 AI hub데이터에 있는 eval 데이터 셋을 사용하지 않고 train에서 임의로 나눠 사용했는지?
+Q1 : (Data set part) KsponSpeech_val(길이 조절 데이터)은 왜 따로 나눴는지?
 
-A1 : RNN-T loss는 wav len과 script len에 따라서 시간과 메모리를 잡아 먹습니다. 그러므로 wav len과 script len은 특정 길이로 제한했는데 eval 데이터에서 제한하면 데이터가 부족해 train에서 나눴습니다. (옛날(19년)에는 없었는데 최근에 올라온거라 ...)
+A1 : RNN-T는 RNN-T Loss를 사용합니다. 그러므로 wav len과 script len에 따라서 시간과 메모리를 잡아 먹습니다. KsponSpeech_eval_clean의 데이터를 wav len과 script len은 특정 길이로 제한하게 되면 데이터의 양이 너무 적어 학습 데이터에서 5시간을 분리했습니다.
 
+* train data 총 길이 - 약 254시간 
+* val data 총 길이 - 약 5시간 
+* KsponSpeech_eval_clean(AI_hub eval 데이터) - 약 2.6시간
 
-음절 단위 말고 자소 단위로 나눈 이유는 RNN-T loss는 wav len과 script len뿐만 아니라 vocab size도 메모리를 잡아 먹습니다.즉 vocab size가 증가 할 수록 메모리를 많이 잡아 먹기 때문에 학습에서 gpu 메모리 이득을 보기 위해 다음과 같이 사용하였습니다. (gpu 메모리가 여유가 있으시면 음절 단위로 해보셔도 좋을것 같습니다.)
+Q2 : (labels part) 왜 음절 단위 말고 자소 단위로 나눴는지?
 
-train data 총 길이 - 약 250시간 (248.9시간) "./label,csv/AI_hub_train_U_800_T_50.csv"
+A2 : RNN-T Loss wav len과 script len뿐만 아니라 vocab size도 메모리를 잡아 먹습니다.즉 vocab size가 증가 할 수록 메모리를 많이 잡아 먹기 때문에 학습에서 gpu 메모리 이득을 보기 위해 다음과 같이 사용하였습니다. (gpu 메모리가 여유가 있으시면 음절 단위로 해보셔도 좋을것 같습니다.)
 
-val data 총 길이 - 약 5시간 (5.1시간) "./label,csv/AI_hub_val_U_800_T_50.csv"
+Q3 : (labels part) 53(sos token) 와 54(eos token) 는 왜 들어간건지? 
 
-Q1 : 53 와 54 는 왜 들어간건지? 
-
-A1 : 나중에 two pass를 사용하기 위해서 집어 넣었습니다. RNN-T만 사용하신다면 삭제해도 무방합니다.
+A3 : 나중에 two pass를 사용하기 위해서 집어 넣었습니다. RNN-T만 사용하신다면 삭제해도 무방합니다.
 
 ## Contacts
 학부생의 귀여운 시도로 봐주시고 해당 작업에 대한 피드백, 문의사항 모두 환영합니다.

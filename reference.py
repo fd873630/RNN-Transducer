@@ -108,10 +108,6 @@ def reference(model, val_loader, device):
             inputs_lengths = inputs_lengths.to(device)
             targets_lengths = targets_lengths.to(device)
             
-            #preds = model.recognize(inputs, inputs_lengths)
-
-            #preds = model.module.recognize(inputs, inputs_lengths)
-
             transcripts = [targets.cpu().numpy()[i][:targets_lengths[i].item()]
                        for i in range(targets.size(0))]
             
@@ -209,8 +205,7 @@ def main():
     model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model2_save_epoch_20.pth"))
     
     model = model.to(device)
-    #model = nn.DataParallel(model).to(device)
-
+    
     #val dataset
     val_dataset = SpectrogramDataset(audio_conf, 
                                      "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_val_U_800_T_50.csv", 
