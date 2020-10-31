@@ -260,6 +260,7 @@ def main():
                                     batch_size=config.data.batch_size,
                                     drop_last=True)
     
+    print(model)
     print("시작합니다.")
     
     pre_val_loss = 100000

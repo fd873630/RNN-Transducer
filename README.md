@@ -7,10 +7,12 @@
 * torch version = 1.2.0
 * Cuda compilation tools, release 9.1, V9.1.85
 
-## Model
-<img width = "400" src = "https://user-images.githubusercontent.com/43025347/96749425-c6f0e480-1405-11eb-9328-06010a44f839.png">
-
 ## Data
+### Dataset information
+AI hub에서 제공하는 '한국어 음성데이터'를 사용하였습니다. AI Hub 음성 데이터는 다음 링크에서 신청 후 다운로드 하실 수 있습니다.
+
+AI Hub 한국어 음성 데이터 : http://www.aihub.or.kr/aidata/105 
+
 ### Data format
 * 음성 데이터 : 16bit, mono 16k sampling WAV audio
 * 정답 스크립트 : 제공된 스크립트를 자소로 변환된 정답
@@ -58,48 +60,66 @@
 
 데이터를 커스텀하여 사용하고 싶으신분들은 다음과 같은 형식으로 .csv 파일을 제작하면 됩니다.
 
-### Dataset information
-AI hub에서 제공하는 '한국어 음성데이터'를 사용하였습니다. AI Hub 음성 데이터는 다음 링크에서 신청 후 다운로드 하실 수 있습니다.
+* hangul.labels
+  ```
+  #id\char 
+  0   _
+  1    
+  2   ㄱ
+  ...
+  52   ㅄ
+  53   <s>
+  54   </s>
+  ```
 
-AI Hub 한국어 음성 데이터 : http://www.aihub.or.kr/aidata/105 
+## Model
+### Feature
+* spectrogram
 
+  parameter | value
+  ------|-----
+  N_FFT | sample_rate * window_size
+  window_size | 20ms
+  window_stride | 10ms
+  window function | hamming window
 
-train data 총 길이 - 약 250시간 (248.9시간) "./label,csv/AI_hub_train_U_800_T_50.csv"
+* code
+  ```python
+  def parse_audio(self, audio_path):
+    y,sr = librosa.load(audio_path, 16000)
+    D = librosa.stft(y, n_fft=n_fft, hop_length=hop_length,
+                            win_length=win_length, window=self.window)
+                
+    spect, phase = librosa.magphase(D)
+    
+    spect = np.log1p(spect)
+    spect = torch.FloatTensor(spect)
+    
+    ```
+### Architecture
+<img width = "400" src = "https://user-images.githubusercontent.com/43025347/96749425-c6f0e480-1405-11eb-9328-06010a44f839.png">
 
-val data 총 길이 - 약 5시간 (5.1시간) "./label,csv/AI_hub_val_U_800_T_50.csv"
-
-
-
-Q1 : 왜 AI hub데이터에 있는 eval 데이터 셋을 사용하지 않고 train에서 임의로 나눠 사용했는지?
-
-A1 : RNN-T loss는 wav len과 script len에 따라서 시간과 메모리를 잡아 먹습니다. 그러므로 wav len과 script len은 특정 길이로 제한했는데 eval 데이터에서 제한하면 데이터가 부족해 train에서 나눴습니다. (옛날(19년)에는 없었는데 최근에 올라온거라 ...)
-
-
-### Labeling
-
-    #id\char 
-    0   _
-    1    
-    2   ㄱ
-    ...
-    52   ㅄ
-    53   <s>
-    54   </s>
- 
-음절 단위 말고 자소 단위로 나눈 이유는 RNN-T loss는 wav len과 script len뿐만 아니라 vocab size도 메모리를 잡아 먹습니다.즉 vocab size가 증가 할 수록 메모리를 많이 잡아 먹기 때문에 학습에서 gpu 메모리 이득을 보기 위해 다음과 같이 사용하였습니다. (gpu 메모리가 여유가 있으시면 음절 단위로 해보셔도 좋을것 같습니다.)
-
-* Final script
-ㅊㅣㄹ ㅅㅣㅂ ㅍㅓㅅㅔㄴㅌㅡ ㅎㅘㄱㄹㅠㄹㅇㅣㄹㅏㄴㅣ
-
-* Number Final script
-16 41 7 1 11 41 9 1 19 25 11 26 4 18 39 ...
-
-txt_path.txt 에 Number Final script가 들어가야 합니다.
-
-Q1 : 53 와 54 는 왜 들어간건지? 
-
-A1 : 나중에 two pass를 사용하기 위해서 집어 넣었습니다. RNN-T만 사용하신다면 삭제해도 무방합니다.
-
+### Print Model
+```python
+DataParallel(
+  (module): Transducer(
+    (encoder): BaseEncoder(
+      (lstm): LSTM(161, 1024, num_layers=6, batch_first=True, dropout=0.3)
+      (output_proj): Linear(in_features=1024, out_features=320, bias=True)
+    )
+    (decoder): BaseDecoder(
+      (embedding): Embedding(54, 128, padding_idx=0)
+      (lstm): LSTM(128, 1024, num_layers=2, batch_first=True, dropout=0.3)
+      (output_proj): Linear(in_features=1024, out_features=320, bias=True)
+    )
+    (joint): JointNet(
+      (forward_layer): Linear(in_features=640, out_features=320, bias=True)
+      (tanh): Tanh()
+      (project_layer): Linear(in_features=320, out_features=54, bias=True)
+    )
+  )
+)
+```
 
 ## References
 ### Git hub References
@@ -121,6 +141,22 @@ A1 : 나중에 two pass를 사용하기 위해서 집어 넣었습니다. RNN-T�
 
 ## computer power
 * NVIDIA TITAN Xp * 4
+
+## Q & A
+Q1 : 왜 AI hub데이터에 있는 eval 데이터 셋을 사용하지 않고 train에서 임의로 나눠 사용했는지?
+
+A1 : RNN-T loss는 wav len과 script len에 따라서 시간과 메모리를 잡아 먹습니다. 그러므로 wav len과 script len은 특정 길이로 제한했는데 eval 데이터에서 제한하면 데이터가 부족해 train에서 나눴습니다. (옛날(19년)에는 없었는데 최근에 올라온거라 ...)
+
+
+음절 단위 말고 자소 단위로 나눈 이유는 RNN-T loss는 wav len과 script len뿐만 아니라 vocab size도 메모리를 잡아 먹습니다.즉 vocab size가 증가 할 수록 메모리를 많이 잡아 먹기 때문에 학습에서 gpu 메모리 이득을 보기 위해 다음과 같이 사용하였습니다. (gpu 메모리가 여유가 있으시면 음절 단위로 해보셔도 좋을것 같습니다.)
+
+train data 총 길이 - 약 250시간 (248.9시간) "./label,csv/AI_hub_train_U_800_T_50.csv"
+
+val data 총 길이 - 약 5시간 (5.1시간) "./label,csv/AI_hub_val_U_800_T_50.csv"
+
+Q1 : 53 와 54 는 왜 들어간건지? 
+
+A1 : 나중에 two pass를 사용하기 위해서 집어 넣었습니다. RNN-T만 사용하신다면 삭제해도 무방합니다.
 
 ## Contacts
 학부생의 귀여운 시도로 봐주시고 해당 작업에 대한 피드백, 문의사항 모두 환영합니다.
