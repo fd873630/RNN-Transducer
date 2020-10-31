@@ -1,5 +1,12 @@
 # RNN-Transducer
 
+|Description|Feature|Dataset|CER|  
+|-----------|-----|-------|------|  
+|Spec_Augment + RNN-T|log_feature_161|KsponSpeech_eval|24.4|
+|Spec_Augment + RNN-T + Beam search(W = 5)|log_feature_161|KsponSpeech_eval|25.4|
+|Spec_Augment + RNN-T|log_feature_161|KsponSpeech_val(길이 조절 데이터)|21.2|
+|Spec_Augment + RNN-T + Beam search(W = 5)|log_feature_161|KsponSpeech_val(길이 조절 데이터)|19.4|
+
 ## Intro
 한국어를 위한 RNN-Transducer입니다. 실시간 인식에는 attention기반의 모델보다 RNN-Transducer가 효과적이다고 합니다. 현재 git hub에는 한국어로 test한 결과가 없어 한국어 RNN-Transducer의 성능을 확인하기 위해 작성하였습니다.
 
