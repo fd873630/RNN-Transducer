@@ -65,8 +65,8 @@ def time_warp(spec, W=5):
     return warped_spectro.squeeze(3)
 
 
-def spec_augment(mel_spectrogram, time_warping_para=40, frequency_masking_para=25,
-                 time_masking_para=15, frequency_mask_num=1, time_mask_num=2):
+def spec_augment(mel_spectrogram, time_warping_para=40, frequency_masking_para=20,
+                 time_masking_para=40, frequency_mask_num=1, time_mask_num=2):
     """Spec augmentation Calculation Function.
     'SpecAugment' have 3 steps for audio data augmentation.
     first step is time warping using Tensorflow's image_sparse_warp function.

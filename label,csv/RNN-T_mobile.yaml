@@ -1,5 +1,5 @@
 data:
-  train_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_train_U_800_T_50.csv"
+  train_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_all_U_800_T_50.csv"
   val_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_val_U_800_T_50.csv"
   seed: 123456
   num_workers: 16
@@ -20,7 +20,7 @@ model:
     hidden_size: 1024
     output_size: 320
     n_layers: 6
-    bidirectional: True
+    bidirectional: False
   dec:
     type: lstm
     embedding_size: 128
@@ -36,7 +36,7 @@ model:
   dropout: 0.3
 
 training:
-  begin_epoch: 8
+  begin_epoch: 0
   end_epoch: 100
 
 optim:

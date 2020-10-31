@@ -108,13 +108,23 @@ def reference(model, val_loader, device):
             inputs_lengths = inputs_lengths.to(device)
             targets_lengths = targets_lengths.to(device)
             
-            #preds = model.module.beam_search(inputs, inputs_lengths, w=5)
+            #preds = model.recognize(inputs, inputs_lengths)
 
-            preds = model.module.recognize(inputs, inputs_lengths)
+            #preds = model.module.recognize(inputs, inputs_lengths)
 
             transcripts = [targets.cpu().numpy()[i][:targets_lengths[i].item()]
                        for i in range(targets.size(0))]
+            
+            if False:
+                preds, _ = model.beam_search(inputs, inputs_lengths, W=5)
+                preds = preds[1:]
+                wow = []
+                wow.append(preds)
                 
+                preds = wow
+            else:
+                preds = model.recognize(inputs, inputs_lengths)
+
             wer, cer, wer_len, cer_len = computer_cer(preds, transcripts)
             
             total_wer += wer
@@ -126,8 +136,6 @@ def reference(model, val_loader, device):
             final_wer = (total_wer / total_wer_len) * 100
             final_cer = (total_cer / total_cer_len) * 100
 
-            #print(len(transcripts))
-            
             for a, b in zip(transcripts,preds):
                 chars = []
                 predic_chars = []
@@ -150,7 +158,7 @@ def reference(model, val_loader, device):
 
 def main():
     
-    yaml_name = "/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile.yaml"
+    yaml_name = "/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile_2.yaml"
 
     configfile = open(yaml_name)
     config = AttrDict(yaml.load(configfile, Loader=yaml.FullLoader))
@@ -198,22 +206,23 @@ def main():
     model = Transducer(enc, dec, config.model.joint.input_size, config.model.joint.inner_dim, config.model.vocab_size) 
     
     # 여기 모델 불러오는거
-    model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model_save_epoch_8.pth"))
+    model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model2_save_epoch_20.pth"))
     
-    model = nn.DataParallel(model).to(device)
+    model = model.to(device)
+    #model = nn.DataParallel(model).to(device)
 
     #val dataset
     val_dataset = SpectrogramDataset(audio_conf, 
-                                     "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_test_all.csv", 
+                                     "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_val_U_800_T_50.csv", 
                                      feature_type=config.audio_data.type,
                                      normalize=True,
                                      spec_augment=False)
 
     val_loader = AudioDataLoader(dataset=val_dataset,
-                                    shuffle=True,
+                                    shuffle=False,
                                     num_workers=config.data.num_workers,
-                                    batch_size=config.data.batch_size,
-                                    drop_last=True)
+                                    batch_size=1,
+                                    drop_last=False)
     
     for i in range(3):
         print(" ")
@@ -231,3 +240,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    

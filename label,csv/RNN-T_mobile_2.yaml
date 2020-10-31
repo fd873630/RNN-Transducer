@@ -1,0 +1,47 @@
+data:
+  train_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_all_U_800_T_50.csv"
+  val_path: "/home/jhjeong/jiho_deep/rnn-t/label,csv/AI_hub_val_U_800_T_50.csv"
+  seed: 123456
+  num_workers: 16
+  batch_size: 32
+  
+
+audio_data:
+  type: "log"
+  sampling_rate: 16000
+  window_size: 0.02
+  window_stride: 0.01
+  window: 'hamming'
+
+model:
+  enc:
+    type: lstm
+    input_size: 161
+    hidden_size: 1024
+    output_size: 320
+    n_layers: 6
+    bidirectional: False
+  dec:
+    type: lstm
+    embedding_size: 128
+    hidden_size: 1024
+    output_size: 320
+    n_layers: 2
+  joint:
+    input_size: 640
+    inner_dim: 320
+
+  vocab_size: 54
+  feature_dim: 160
+  dropout: 0.3
+
+training:
+  begin_epoch: 19
+  end_epoch: 100
+
+optim:
+  type: "AdamW"
+  lr: 0.00001110889
+  weight_decay: 0.01
+  milestones: [7, 14]
+  decay_rate: 0.3333

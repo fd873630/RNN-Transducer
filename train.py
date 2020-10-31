@@ -144,7 +144,7 @@ def eval(model, val_loader, criterion, device):
 
 def main():
     
-    yaml_name = "/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile.yaml"
+    yaml_name = "/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile_2.yaml"
 
     with open("./train.txt", "w") as f:
         f.write(yaml_name)
@@ -204,7 +204,7 @@ def main():
     model = Transducer(enc, dec, config.model.joint.input_size, config.model.joint.inner_dim, config.model.vocab_size) 
     
     # 여기 모델 불러오는거
-    #model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model_save_epoch_8.pth"))
+    model.load_state_dict(torch.load("/home/jhjeong/jiho_deep/rnn-t/model_save/model2_save_epoch_19.pth"))
     
     model = nn.DataParallel(model).to(device)
 

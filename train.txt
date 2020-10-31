@@ -1,3 +1,3 @@
-/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile.yaml
+/home/jhjeong/jiho_deep/rnn-t/label,csv/RNN-T_mobile_2.yaml
 
 학습 시작

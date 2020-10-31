@@ -10,33 +10,70 @@
 ## Model
 <img width = "400" src = "https://user-images.githubusercontent.com/43025347/96749425-c6f0e480-1405-11eb-9328-06010a44f839.png">
 
-## Data set
-### AI_hub
+## Data
+### Data format
+* 음성 데이터 : 16bit, mono 16k sampling WAV audio
+* 정답 스크립트 : 제공된 스크립트를 자소로 변환된 정답
+  ```js
+  1. "b/ (70%)/(칠 십 퍼센트) 확률이라니 " => "칠 십 퍼센트 확률이라니" 
+  
+  2. "칠 십 퍼센트 확률이라니" => "ㅊㅣㄹ ㅅㅣㅂ ㅍㅓㅅㅔㄴㅌㅡ ㅎㅘㄱㄹㅠㄹㅇㅣㄹㅏㄴㅣ"
+
+  3. "ㅊㅣㄹ ㅅㅣㅂ ㅍㅓㅅㅔㄴㅌㅡ ㅎㅘㄱㄹㅠㄹㅇㅣㄹㅏㄴㅣ" => "16 41 7 1 11 41 9 1 19 25 11 26 4 18 39 ..."
+  
+  최종:  "b/ (70%)/(칠 십 퍼센트) 확률이라니 " => "16 41 7 1 11 41 9 1 19 25 11 26 4 18 39 ..."
+  ```
+
+1. 위의 txt 전처리는 https://github.com/sooftware/KoSpeech/wiki/Preparation-before-Training 다음을 참고하였습니다.
+
+2. ./model_rnnt/hangul.py 에 있는 pureosseugi 함수를 통해 자소 분리를 하였습니다.
+
+3. ./label,csv/hangul.labels 를 기반으로 대응하는 숫자로 변환하였습니다.
+
+### Dataset folder structure
+* DATASET-ROOT-FOLDER
+```
+|--DATA
+   |--train
+      |--wav
+         +--a.wav, b.wav, c.wav ...
+      |--txt
+         +--a.txt, b.txt, c.txt ...
+   |--val
+      |--wav
+         +--a_val.wav, b_val.wav, c_val.wav ...
+      |--txt
+         +--a_val.txt, b_val.txt, c_val.txt ...
+```
+* data_list.csv
+  ```
+  <wav-path>,<script-path>
+  KsponSpeech_000001.wav,KsponSpeech_000001.txt
+  KsponSpeech_000002.wav,KsponSpeech_000002.txt
+  KsponSpeech_000003.wav,KsponSpeech_000003.txt
+  KsponSpeech_000004.wav,KsponSpeech_000004.txt
+  KsponSpeech_000005.wav,KsponSpeech_000005.txt
+  ...
+  ```
+
+데이터를 커스텀하여 사용하고 싶으신분들은 다음과 같은 형식으로 .csv 파일을 제작하면 됩니다.
+
+### Dataset information
 AI hub에서 제공하는 '한국어 음성데이터'를 사용하였습니다. AI Hub 음성 데이터는 다음 링크에서 신청 후 다운로드 하실 수 있습니다.
+
+AI Hub 한국어 음성 데이터 : http://www.aihub.or.kr/aidata/105 
+
 
 train data 총 길이 - 약 250시간 (248.9시간) "./label,csv/AI_hub_train_U_800_T_50.csv"
 
 val data 총 길이 - 약 5시간 (5.1시간) "./label,csv/AI_hub_val_U_800_T_50.csv"
 
-AI Hub 한국어 음성 데이터 : http://www.aihub.or.kr/aidata/105 
+
 
 Q1 : 왜 AI hub데이터에 있는 eval 데이터 셋을 사용하지 않고 train에서 임의로 나눠 사용했는지?
 
 A1 : RNN-T loss는 wav len과 script len에 따라서 시간과 메모리를 잡아 먹습니다. 그러므로 wav len과 script len은 특정 길이로 제한했는데 eval 데이터에서 제한하면 데이터가 부족해 train에서 나눴습니다. (옛날(19년)에는 없었는데 최근에 올라온거라 ...)
 
-### Custom Data set
-데이터를 커스텀하여 사용하고 싶으신분들은 다음과 같은 형식으로 .csv 파일을 제작하면 됩니다.
-
-    wav_path/wav_name.wav, txt_path/txt_path.txt
-
-### Script
-* Raw script
-b/ (70%)/(칠 십 퍼센트) 확률이라니 
-
-* Final script
-ㅊㅣㄹ ㅅㅣㅂ ㅍㅓㅅㅔㄴㅌㅡ ㅎㅘㄱㄹㅠㄹㅇㅣㄹㅏㄴㅣ
-
-위의 txt 전처리는 https://github.com/sooftware/KoSpeech/wiki/Preparation-before-Training 다음을 참고하였습니다.
 
 ### Labeling
 
@@ -72,7 +109,8 @@ A1 : 나중에 two pass를 사용하기 위해서 집어 넣었습니다. RNN-T�
 * https://github.com/sooftware/KoSpeech/wiki/Preparation-before-Training
 
 ### Paper References
-* https://arxiv.org/abs/1211.3711
+* Sequence Transduction with Recurrent Neural Networks (https://arxiv.org/abs/1211.3711)
+* Two-Pass End-to-End Speech Recognition (https://arxiv.org/abs/1908.10992)
 
 ### Blog References
 * https://gigglehd.com/zbxe/14052329
